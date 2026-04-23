@@ -1,0 +1,31 @@
+{
+  "name": "service-now-file-upload",
+  "version": "4.0.1",
+  "description": "Integrates with Service Now File Storage and Teams",
+  "main": "build/module.js",
+  "scripts": {
+    "transpile": "tsc -p .",
+    "zip": "tar cfz service-now-file-upload.tar.gz build/* package.json package-lock.json README.md icon.png",
+    "build": "npm run transpile && npm run lint && npm run zip",
+    "lint": "tslint -c tslint.json src/**/*.ts"
+  },
+  "keywords": [
+    "Service Now",
+    "File Upload",
+    "Teams Files",
+    "Microsoft Teams"
+  ],
+  "author": "Cognigy GmbH",
+  "license": "MIT",
+  "dependencies": {
+    "@cognigy/extension-tools": "^0.12.0",
+    "axios": "^0.21.1",
+    "https": "^1.0.0",
+    "tslint": "^6.1.2"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/node": "^13.13.15",
+    "typescript": "^3.8.3"
+  }
+}

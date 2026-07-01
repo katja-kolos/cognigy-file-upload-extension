@@ -13,8 +13,6 @@ interface ITeamsAttachment {
 
 export interface IMoveBlobParams extends INodeFunctionBaseParams {
   config: {
-    // connection: any;
-    // connectionSection: any;
     msToken: string;
     authentication: "none" | "token" | "oauth2";
     connection: {
@@ -24,8 +22,6 @@ export interface IMoveBlobParams extends INodeFunctionBaseParams {
       oAuth2Scope: string;
     };
     sNowConnection: any;
-    // sourceUrl: string;
-    // inputData: any;
     destinationUrl: string;
     storeLocation: any;
     inputKey: string;
@@ -35,18 +31,8 @@ export interface IMoveBlobParams extends INodeFunctionBaseParams {
 export const moveBlob = createNodeDescriptor({
   type: "moveBlob",
   defaultLabel: "Upload Teams - ServiceNow",
-  // preview: { key: "sourceUrl", type: "text" },
   preview: { key: "destinationUrl", type: "text" },
   fields: [
-    // {
-    //   key : "msToken",
-		// 	label: "Microsoft Authentication Token",
-    //   description: "Token obtained with HTTP node necessary for inline upload from MS Teams.",
-		// 	type: "cognigyText",
-		// 	params: {
-		// 	  required: true
-		// 	}
-		// },
     {
       key : "authentication",
 			label: "Authentication Type",
@@ -96,20 +82,6 @@ export const moveBlob = createNodeDescriptor({
         value: "token",
       }
     },
-    // {
-    //   key: "inputData",
-    //   label: "Input data (attachments)",
-    //   description: "Pass {{input.data.request}}",
-    //   type: "json",
-    //   params: { required: true }
-    // },
-    // {
-    //   key: "sourceUrl",
-    //   label: "Source URL (MS Teams > NiCE Sharepoint)",
-    //   description: "Source tmp URL. Format: https://niceonline-my.sharepoint.com/personal/user_name_nice_com/_layouts/15/download.aspx?UniqueId=unique_id&Translate=false&tempauth=v1.api_key&ApiVersion=2.0",
-    //   type: "cognigyText",
-    //   params: { required: true }
-    // },
     {
       key: "destinationUrl",
       label: "Destination Blob URL in ServiceNow",
@@ -180,10 +152,7 @@ export const moveBlob = createNodeDescriptor({
     }
   ],
   form: [
-    // { type: "field", key: "msToken" },
     { type: "section", key: "connectionSection" },
-    // { type: "field", key: "inputData" },
-    // { type: "field", key: "sourceUrl" },
     { type: "field", key: "destinationUrl" },
     { type: "section", key: "storage" },
   ],
@@ -226,15 +195,9 @@ export const moveBlob = createNodeDescriptor({
         api.log!("error", "Bearer token is undefined. Aborting file upload.");
         return;
       }
-      // a) extract sourceURL from input, instead of giving it in the flow
-      // (or make it possible to modify in the flow but add option extract from input)
-      // b) construct destination URL based on input and context
-      // (or make it possible to override in the flow, but add option to construct based on input and context)
       let sourceUrl;
       let sourceResponse;
-      // const attachments = Array.isArray(inputData)
-      //   ? inputData
-      //   : inputData?.attachments;
+      // assumes "attachments" is in Cognigy Context created previously in the flow.
       const attachments = api.getContext?.("attachments") as ITeamsAttachment[] | undefined;
       const tableName = api.getContext?.("tablename");
       const sysId = api.getContext?.("snowResponse")?.result?.result[0]?.sys_id;
@@ -244,7 +207,8 @@ export const moveBlob = createNodeDescriptor({
         api.log!("error", "No attachments found. Pass {{input.data.request.attachments}} or an object with .attachments");
         return;
       }
-      api.log!("info", `Found ${attachments.length - 1} attachment(s)`); // 1 attachment is the text/html content which we want to skip
+      // one attachment is the text/html content which we want to skip
+      api.log!("info", `Found ${attachments.length - 1} attachment(s)`);
       const uploadResults = [];
       for (const attachment of attachments) {
         if (attachment.contentType === "text/html") {
@@ -275,8 +239,7 @@ export const moveBlob = createNodeDescriptor({
               'Accept': 'application/json',
               'Content-Type': contentType // Reusing the content-type from the source
             },
-            data: fileBytes, // The Buffer/ArrayBuffer from the GET request
-            // ?table_name={{context.tablename}}&table_sys_id={{context.sys_id}}&file_name={{input.fileName}}
+            data: fileBytes,
             params: {
               table_name: tableName,
               table_sys_id: sysId,
@@ -325,7 +288,7 @@ export const moveBlob = createNodeDescriptor({
         } else if (attachment.contentUrl) {
           // this will only be images
           // but API returns application/octet-stream
-          // when upload, pass image/png (?)
+          // when upload, pass image/png
           sourceUrl = attachment.contentUrl;
           api.log!('info', `Inline upload. Downloading file from ${sourceUrl}`);
           sourceResponse = await axios.get(sourceUrl, {

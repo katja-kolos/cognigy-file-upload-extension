@@ -27,7 +27,7 @@ export const authenticate = async (serverUrl: string, clientId: string, clientSe
         return authResponse?.data;
     } catch (error) {
         console.log("Could not obtain oauth token from sNow, aborting.");
-        return null;
+        throw error;
     }
 };
 
